@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import { auth, provider, signInWithPopup, signOut } from './firebase';
 
 function App() {
+  const [user, setUser] = useState(null);
   // useState: 데이터를 저장하고 업데이트하는 React 기능
   const [carpools, setCarpools] = useState([]);  // 카풀 목록
   const [loading, setLoading] = useState(true);   // 로딩 상태
@@ -91,6 +93,10 @@ function App() {
 
   // 카풀 참여하기 함수
   const handleJoin = async (carpoolId) => {
+    if (!user) {
+      alert('로그인 후 참여할 수 있습니다.');
+      return;
+    }
     try {
       const response = await fetch(`http://localhost:5000/api/carpools/${carpoolId}/join`, {
         method: 'POST',
@@ -98,6 +104,7 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ user_id: user.uid })
       });
       const data = await response.json();
       if (!response.ok) {
@@ -110,6 +117,20 @@ function App() {
     }
   };
 
+  const handleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      setUser(result.user);
+    } catch (error) {
+      alert('로그인 실패: ' + error.message);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setUser(null);
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -118,6 +139,18 @@ function App() {
       </header>
 
       <main className="main-content">
+        {/* 사용자 로그인 상태에 따른 UI */}
+        <section className="user-auth-section">
+          {user ? (
+            <div className="user-info">
+              <span>{user.displayName}님 환영합니다!</span>
+              <button onClick={handleLogout} className="logout-btn">로그아웃</button>
+            </div>
+          ) : (
+            <button onClick={handleLogin} className="login-btn">구글 로그인</button>
+          )}
+        </section>
+
         {/* 새 카풀 등록 폼 */}
         <section className="carpool-form-section">
           <h2>새 카풀 등록</h2>

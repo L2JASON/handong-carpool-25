@@ -68,19 +68,36 @@ def create_carpool():
 # 참여하기 API
 @app.route('/api/carpools/<carpool_id>/join', methods=['POST'])
 def join_carpool(carpool_id):
+    data = request.get_json()
+    user_id = data.get('user_id')
+    if not user_id:
+        return jsonify({"error": "로그인이 필요합니다."}), 401
     ref = db.reference(f'carpools/{carpool_id}')
     carpool = ref.get()
     if not carpool:
         return jsonify({"error": "카풀을 찾을 수 없습니다."}), 404
+    # 이미 참여한 유저인지 확인
+    participants = carpool.get('participants', [])
+    if user_id in participants:
+        return jsonify({"error": "이미 참여한 카풀입니다."}), 400
     if carpool['currentSeats'] >= carpool['totalSeats']:
         return jsonify({"error": "정원이 이미 다 찼습니다."}), 400
+    # 참여 처리
     carpool['currentSeats'] += 1
-    ref.update({"currentSeats": carpool['currentSeats']})
+    participants.append(user_id)
+    ref.update({"currentSeats": carpool['currentSeats'], "participants": participants})
     return jsonify({
         "message": "참여가 완료되었습니다!",
         "currentSeats": carpool['currentSeats'],
         "totalSeats": carpool['totalSeats']
     })
+
+# DB 전체 데이터를 삭제하는 임시 API
+@app.route('/api/clean-db', methods=['POST'])
+def clean_db():
+    ref = db.reference('/')
+    ref.set({})
+    return jsonify({"message": "DB 모든 데이터가 삭제되었습니다."})
 
 if __name__ == '__main__':
     print("🚗 한동대 카풀 서버를 시작합니다...")
