@@ -89,6 +89,27 @@ function App() {
     }
   };
 
+  // 카풀 참여하기 함수
+  const handleJoin = async (carpoolId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/carpools/${carpoolId}/join`, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.error || '참여에 실패했습니다');
+        return;
+      }
+      fetchCarpools(); // 참여 후 목록 새로고침
+    } catch (err) {
+      alert('에러: ' + err.message);
+    }
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -189,19 +210,23 @@ function App() {
               {carpools.length === 0 ? (
                 <p>등록된 카풀이 없습니다.</p>
               ) : (
-                carpools.map(carpool => (
-                  <div key={carpool.id} className="carpool-card">
-                    <div className="carpool-info">
-                      <h3>{carpool.departure} → {carpool.destination}</h3>
-                      <p><strong>시간:</strong> {carpool.time}</p>
-                      <p><strong>운전자:</strong> {carpool.driver}</p>
-                      <p><strong>남은 자리:</strong> {carpool.seats}명</p>
+                carpools.map(carpool => {
+                  const isFull = carpool.currentSeats >= carpool.totalSeats;
+                  return (
+                    <div key={carpool.id} className="carpool-card">
+                      <div className="carpool-info">
+                        <h3>{carpool.departure} → {carpool.destination}</h3>
+                        <p><strong>시간:</strong> {carpool.time}</p>
+                        <p><strong>운전자:</strong> {carpool.driver}</p>
+                        <p><strong>정원:</strong> {carpool.currentSeats}/{carpool.totalSeats}</p>
+                        {isFull && <p style={{color:'red', fontWeight:'bold'}}>모집 완료</p>}
+                      </div>
+                      <button className="join-btn" onClick={() => handleJoin(carpool.id)} disabled={isFull}>
+                        {isFull ? '참여불가' : '참여하기'}
+                      </button>
                     </div>
-                    <button className="join-btn">
-                      참여하기
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
