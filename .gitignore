@@ -1,9 +1,27 @@
+# =====================
+# Node.js (frontend)
+# =====================
 node_modules/
-.env
 build/
 dist/
+.env
+.env.local
+
+# =====================
+# Python (backend)
+# =====================
+venv/
 __pycache__/
 *.pyc
+instance/
+.env
+
+# =====================
+# Common
+# =====================
 .DS_Store
-.env.*
 .vscode/
+.idea/
+*.log
+*.zip
+*.bak
